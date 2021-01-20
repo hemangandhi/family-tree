@@ -3,7 +3,7 @@ with import <nixpkgs> {};
 stdenv.mkDerivation {
   name = "family-tree-env";
   buildInputs = [
-    # rust editor
+    emacs26Packages.editorconfig
     emacs26Packages.company
     emacs26Packages.eglot
     emacs26Packages.cargo
