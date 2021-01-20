@@ -35,10 +35,13 @@ export class FamilyTree {
     
     constructor() {
 	// TODO: support a pre-loaded family tree.
+	const datum = new Map<number, FamilyMember>();
+	datum.set(0, {uuid: 0, children: []} as FamilyMember);
+	this.rootsChange.next([datum, 1]);
     }
 
     grow(parent: FamilyMember) {
-	this.data[0].set(this.data[1], {name: "", uuid: this.data[1]} as FamilyMember);
+	this.data[0].set(this.data[1], {children: [], name: "", uuid: this.data[1]} as FamilyMember);
 	parent.children.push(this.data[1]);
 	this.rootsChange.next([this.data[0], this.data[1] + 1]);
     }
@@ -95,7 +98,7 @@ export class AppComponent {
 
         _familyTree.rootsChange.subscribe(data => {
 	    this.familyRefs = data[0];
-	    this.dataSource.data = this.familyRefs.values();
+	    this.dataSource.data = Array.from(this.familyRefs.values());
         });
     }
 
