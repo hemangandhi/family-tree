@@ -14,6 +14,7 @@ export class FamilyMember {
     spouse: number | null;
     children: number[];
     uuid: number;
+    level: number;
 }
 
 export class FamilyTreeFlatNode {
@@ -36,12 +37,12 @@ export class FamilyTree {
     constructor() {
 	// TODO: support a pre-loaded family tree.
 	const datum = new Map<number, FamilyMember>();
-	datum.set(0, {uuid: 0, children: []} as FamilyMember);
+	datum.set(0, {uuid: 0, children: [], level: 0} as FamilyMember);
 	this.rootsChange.next([datum, 1]);
     }
 
     grow(parent: FamilyMember) {
-	this.data[0].set(this.data[1], {children: [], name: "", uuid: this.data[1]} as FamilyMember);
+	this.data[0].set(this.data[1], {children: [], name: "", uuid: this.data[1], level: parent.level + 1} as FamilyMember);
 	parent.children.push(this.data[1]);
 	this.rootsChange.next([this.data[0], this.data[1] + 1]);
     }
@@ -71,14 +72,14 @@ export class AppComponent {
 	const newNode = currentNode && currentNode.itemRef === node.uuid ?
 	    currentNode : new FamilyTreeFlatNode();
 	newNode.itemRef = node.uuid;
-	newNode.level = level;
+	newNode.level = node.level;
 	this.nodeRefs.set(node.uuid, newNode);
 	return newNode;
     };
 
     getLevel = (n: FamilyTreeFlatNode) => n.level;
-    isExpandable = (n: FamilyTreeFlatNode) => n.expanded;
-    getChildren = (n: FamilyMember) => n.children.map(k => this.familyRefs.get(k));
+    isExpandable = (n: FamilyTreeFlatNode) => true;
+    getChildren = (n: FamilyMember) => {console.log(n); return n.children.map(k => this.familyRefs.get(k)); };
 
     // See inside the constructor for how these are wired together.
     // The important values are above.
@@ -98,7 +99,8 @@ export class AppComponent {
 
         _familyTree.rootsChange.subscribe(data => {
 	    this.familyRefs = data[0];
-	    this.dataSource.data = Array.from(this.familyRefs.values());
+	    this.dataSource.data = Array.from(this.familyRefs.values())
+		.sort((l, r) => l.uuid - r.uuid);
         });
     }
 
@@ -107,9 +109,12 @@ export class AppComponent {
 	return !got || got.name === "";
     }
 
+    itemOfNode = (n: FamilyTreeFlatNode) => this.familyRefs.get(n.itemRef).name;
+
     addNode(n: FamilyTreeFlatNode) {
 	const parent = this.familyRefs.get(n.itemRef);
 	this._familyTree.grow(parent!);
+	this.treeControl.expand(n);
     }
 
     saveNode(n: FamilyTreeFlatNode, name: string) {
